@@ -2,11 +2,13 @@ from aws_cdk import (
     # Duration,
     Stack,
     # aws_sqs as sqs,
+    CfnOutput,
     aws_iam as iam,
     aws_s3 as s3,
     RemovalPolicy,
     aws_s3_deployment as s3deploy,
     aws_lambda as _lambda, 
+    aws_s3_notifications as s3_notifications
 )
 from constructs import Construct
 
@@ -51,6 +53,11 @@ class AwsCdkMicroEtlPipelineStack(Stack):
             code=_lambda.Code.from_asset('functions'),
             handler='csv_to_parquet_lambda.lambda_handler',
             role=micro_etl_lambda_role
+        )
+             # Configure S3 event notification to trigger the Lambda function
+        bucket_input.add_event_notification(
+            s3.EventType.OBJECT_CREATED,
+            s3_notifications.LambdaDestination(micro_etl_lambda)
         )
 
            # CDK Outputs
