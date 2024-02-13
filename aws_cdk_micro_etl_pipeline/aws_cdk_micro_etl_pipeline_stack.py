@@ -11,6 +11,8 @@ from aws_cdk import (
     aws_s3_notifications as s3_notifications
 )
 from constructs import Construct
+import shutil
+import os
 
 class AwsCdkMicroEtlPipelineStack(Stack):
 
@@ -39,13 +41,20 @@ class AwsCdkMicroEtlPipelineStack(Stack):
             self, 'MicroETLHandlerRole',
             assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
         )
-        
+          # Allow Lambda function to write logs to CloudWatch
+        micro_etl_lambda_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
+                resources=["arn:aws:logs:*:*:*"]
+            )
+        )
         # Attach policy to allow Lambda to read from input S3 bucket
         bucket_input.grant_read(micro_etl_lambda_role)
 
         # Attach policy to allow Lambda to write to output S3 bucket
         bucket_output.grant_write(micro_etl_lambda_role)
-        
+
+    
         micro_etl_lambda = _lambda.Function(
             self, 'MicroETLHandler',
             function_name="MicroETLHandler",
@@ -54,10 +63,12 @@ class AwsCdkMicroEtlPipelineStack(Stack):
             handler='csv_to_parquet_lambda.lambda_handler',
             role=micro_etl_lambda_role
         )
+
              # Configure S3 event notification to trigger the Lambda function
         bucket_input.add_event_notification(
             s3.EventType.OBJECT_CREATED,
             s3_notifications.LambdaDestination(micro_etl_lambda)
+            #"Event to trigger csv to parquet lambda converter"
         )
 
            # CDK Outputs
