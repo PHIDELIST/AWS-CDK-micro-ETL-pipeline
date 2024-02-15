@@ -11,8 +11,7 @@ from aws_cdk import (
     aws_s3_notifications as s3_notifications
 )
 from constructs import Construct
-import shutil
-import os
+
 
 class AwsCdkMicroEtlPipelineStack(Stack):
 
@@ -55,14 +54,22 @@ class AwsCdkMicroEtlPipelineStack(Stack):
         bucket_output.grant_write(micro_etl_lambda_role)
 
     
-        micro_etl_lambda = _lambda.Function(
+        # micro_etl_lambda = _lambda.Function(
+        #     self, 'MicroETLHandler',
+        #     function_name="MicroETLHandler",
+        #     runtime=_lambda.Runtime.PYTHON_3_10,
+        #     code=_lambda.Code.from_asset('functions'),
+        #     handler='csv_to_parquet_lambda.lambda_handler',
+        #     role=micro_etl_lambda_role
+        # )
+         # Lambda function for micro ETL using Docker image
+        micro_etl_lambda = _lambda.DockerImageFunction(
             self, 'MicroETLHandler',
             function_name="MicroETLHandler",
-            runtime=_lambda.Runtime.PYTHON_3_10,
-            code=_lambda.Code.from_asset('functions'),
-            handler='csv_to_parquet_lambda.lambda_handler',
+            code=_lambda.DockerImageCode.from_image_asset('functions'),
             role=micro_etl_lambda_role
         )
+
 
              # Configure S3 event notification to trigger the Lambda function
         bucket_input.add_event_notification(
