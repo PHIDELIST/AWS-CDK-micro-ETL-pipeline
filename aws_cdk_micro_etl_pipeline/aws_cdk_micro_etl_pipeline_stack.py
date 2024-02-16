@@ -7,9 +7,11 @@ from aws_cdk import (
     aws_iam as iam,
     aws_s3 as s3,
     RemovalPolicy,
-    aws_s3_deployment as s3deploy,
+    aws_glue as glue,
     aws_lambda as _lambda, 
-    aws_s3_notifications as s3_notifications
+    aws_s3_notifications as s3_notifications,
+    aws_athena as athena,
+    aws_sns as sns
 )
 from constructs import Construct
 
@@ -41,13 +43,44 @@ class AwsCdkMicroEtlPipelineStack(Stack):
             self, 'MicroETLHandlerRole',
             assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
         )
-          # Allow Lambda function to write logs to CloudWatch
+        # Allow Lambda function to write logs to CloudWatch
         micro_etl_lambda_role.add_to_policy(
             iam.PolicyStatement(
                 actions=["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
                 resources=["arn:aws:logs:*:*:*"]
             )
         )
+                # Add permissions to the Lambda role
+        micro_etl_lambda_role.add_to_policy(iam.PolicyStatement(
+            effect=iam.Effect.ALLOW,
+            actions=[
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "s3:GetObject",
+                "s3:PutObject",
+                "athena:startQueryExecution",
+                "athena:stopQueryExecution",
+                "athena:getQueryExecution",
+                "athena:getDataCatalog",
+                "athena:getQueryResults",
+                "glue:CreateDatabase", 
+                "glue:GetDatabase",    
+                "glue:UpdateDatabase", 
+                "glue:DeleteDatabase", 
+                "glue:CreateTable",    
+                "glue:GetTable",       
+                "glue:UpdateTable",    
+                "glue:DeleteTable",    
+                "glue:GetTables",      
+                "glue:GetPartitions",  
+                "glue:BatchDeletePartition", 
+                "glue:CreatePartition",      
+                "glue:DeletePartition"     
+            ],
+            resources=["*"]
+        ))
+
         # Policy to allow Lambda to read from input S3 bucket
         bucket_input.grant_read(micro_etl_lambda_role)
 
@@ -55,7 +88,7 @@ class AwsCdkMicroEtlPipelineStack(Stack):
         bucket_output.grant_write(micro_etl_lambda_role)
 
 
-         # Lambda function for micro ETL using Docker image
+        # Lambda function for micro ETL using Docker image
         micro_etl_lambda = _lambda.DockerImageFunction(
             self, 'MicroETLHandler',
             function_name="MicroETLHandler",
@@ -65,15 +98,36 @@ class AwsCdkMicroEtlPipelineStack(Stack):
         )
 
 
-             # S3 event notification to trigger the Lambda function
+        # S3 event notification to trigger the Lambda function
         bucket_input.add_event_notification(
             s3.EventType.OBJECT_CREATED,
             s3_notifications.LambdaDestination(micro_etl_lambda)
         )
 
-           # CDK Outputs
+
+
+        # Glue database
+        micro_etl_glue_database = glue.CfnDatabase(
+            self, "MicroEtldb",
+            catalog_id="MicroEtldb",
+            database_input={"name": "microetldb"}
+        )
+
+
+        # Get the S3 bucket object from its name
+        output_s3_bucket = s3.Bucket.from_bucket_name(self, "OutputS3Bucket", bucket_name="micro-etl-output")
+        # Glue crawler
+        micro_etl_crawler = glue.CfnCrawler(self, "MicroETLCrawler",
+                                      role=micro_etl_lambda_role.role_arn,
+                                      database_name= micro_etl_glue_database.catalog_id,
+                                      targets={"s3Targets": [{"path": output_s3_bucket.bucket_arn}]}
+                                      )
+
+     
+        
         CfnOutput(scope=self, id='LambdaFunctionName', value=micro_etl_lambda.function_name)
         CfnOutput(scope=self, id='S3OutputBucketName', value=bucket_output.bucket_name)
         CfnOutput(scope=self, id='S3InputBucketName', value=bucket_input.bucket_name)
+        CfnOutput(scope=self, id='GlueDatabaseName', value=micro_etl_glue_database.catalog_id)
 
 
