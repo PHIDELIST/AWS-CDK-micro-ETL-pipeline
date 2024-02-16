@@ -78,6 +78,8 @@ class AwsCdkMicroEtlPipelineStack(Stack):
                 "glue:DeleteTable",    
                 "glue:GetTables",      
                 "glue:GetPartitions",  
+                "glue:BatchGetPartition",
+                "glue:BatchCreatePartition",
                 "glue:BatchDeletePartition", 
                 "glue:CreatePartition",      
                 "glue:DeletePartition",
@@ -122,9 +124,10 @@ class AwsCdkMicroEtlPipelineStack(Stack):
         # Get the S3 bucket object from its name
         output_s3_bucket = s3.Bucket.from_bucket_name(self, "OutputS3Bucket", bucket_name="micro-etl-output")
         # Glue crawler
-        micro_etl_crawler = glue.CfnCrawler(self, "MicroETLCrawler",
+        micro_etl_crawler = glue.CfnCrawler(self, "microetlgluecrawler",
                                       role=micro_etl_lambda_role.role_arn,
-                                      database_name= micro_etl_glue_database.catalog_id,
+                                      name="microetlgluecrawler",
+                                      database_name= micro_etl_glue_database.database_input.name,
                                        targets={"s3Targets": [{"path": f"s3://{output_s3_bucket.bucket_name}/"}]}
                                       )
 
@@ -136,13 +139,18 @@ class AwsCdkMicroEtlPipelineStack(Stack):
                                                   "enforce_work_group_configuration": True,
                                                   "bytes_scanned_cutoff_per_query": 100000000,
                                                   "requester_pays_enabled": False,
-                                              },
+                                                  "result_configuration": {
+                                                  "output_location": f"s3://{output_s3_bucket.bucket_name}/athena-results/"
+                                                                         }
+                                                    },
                                                description="Athena workgroup for the Micro ETL pipeline")
         
         
         CfnOutput(scope=self, id='LambdaFunctionName', value=micro_etl_lambda.function_name)
         CfnOutput(scope=self, id='S3OutputBucketName', value=bucket_output.bucket_name)
         CfnOutput(scope=self, id='S3InputBucketName', value=bucket_input.bucket_name)
-        CfnOutput(scope=self, id='GlueDatabaseName', value=micro_etl_glue_database.catalog_id)
+        CfnOutput(scope=self, id='GlueDatabaseName', value=micro_etl_glue_database.database_input.name)
+        CfnOutput(scope=self, id='AthenaWorkgroup', value=micro_etl_athena_workgroup.name)
+        CfnOutput(scope=self, id='GlueCrawler', value=micro_etl_crawler.name)
 
 
