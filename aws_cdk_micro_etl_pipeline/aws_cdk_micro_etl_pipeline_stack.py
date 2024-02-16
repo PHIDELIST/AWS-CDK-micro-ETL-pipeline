@@ -108,7 +108,7 @@ class AwsCdkMicroEtlPipelineStack(Stack):
 
         # Glue database
         micro_etl_glue_database = glue.CfnDatabase(
-            self, "MicroEtldb",
+            self, "eicroetldb",
             catalog_id="MicroEtldb",
             database_input={"name": "microetldb"}
         )
@@ -123,7 +123,17 @@ class AwsCdkMicroEtlPipelineStack(Stack):
                                       targets={"s3Targets": [{"path": output_s3_bucket.bucket_arn}]}
                                       )
 
-     
+        # Athena workgroup
+        micro_etl_athena_workgroup = athena.CfnWorkGroup(self, "MiroETLWorkGroup",
+                                              name="MiroETLWorkGroup",
+                                              work_group_configuration={
+                                                  "publish_cloud_watch_metrics_enabled": True,
+                                                  "enforce_work_group_configuration": True,
+                                                  "bytes_scanned_cutoff_per_query": 100000000,
+                                                  "requester_pays_enabled": False,
+                                              },
+                                               description="Athena workgroup for the Micro ETL pipeline")
+        
         
         CfnOutput(scope=self, id='LambdaFunctionName', value=micro_etl_lambda.function_name)
         CfnOutput(scope=self, id='S3OutputBucketName', value=bucket_output.bucket_name)
