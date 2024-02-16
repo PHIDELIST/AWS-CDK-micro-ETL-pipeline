@@ -41,7 +41,10 @@ class AwsCdkMicroEtlPipelineStack(Stack):
         # Lambda function for micro ETL
         micro_etl_lambda_role = iam.Role(
             self, 'MicroETLHandlerRole',
-            assumed_by=iam.ServicePrincipal('lambda.amazonaws.com'),
+            assumed_by=iam.CompositePrincipal(
+                iam.ServicePrincipal('lambda.amazonaws.com'),
+                iam.ServicePrincipal('glue.amazonaws.com')
+            )
         )
         # Allow Lambda function to write logs to CloudWatch
         micro_etl_lambda_role.add_to_policy(
@@ -108,8 +111,8 @@ class AwsCdkMicroEtlPipelineStack(Stack):
 
         # Glue database
         micro_etl_glue_database = glue.CfnDatabase(
-            self, "eicroetldb",
-            catalog_id="MicroEtldb",
+            self, "Microetldb",
+            catalog_id="576997243977",
             database_input={"name": "microetldb"}
         )
 
@@ -120,7 +123,7 @@ class AwsCdkMicroEtlPipelineStack(Stack):
         micro_etl_crawler = glue.CfnCrawler(self, "MicroETLCrawler",
                                       role=micro_etl_lambda_role.role_arn,
                                       database_name= micro_etl_glue_database.catalog_id,
-                                      targets={"s3Targets": [{"path": output_s3_bucket.bucket_arn}]}
+                                       targets={"s3Targets": [{"path": f"s3://{output_s3_bucket.bucket_name}/"}]}
                                       )
 
         # Athena workgroup
