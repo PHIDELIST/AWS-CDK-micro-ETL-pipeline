@@ -1,5 +1,6 @@
 from aws_cdk import (
     # Duration,
+    Duration,
     Stack,
     # aws_sqs as sqs,
     CfnOutput,
@@ -47,35 +48,27 @@ class AwsCdkMicroEtlPipelineStack(Stack):
                 resources=["arn:aws:logs:*:*:*"]
             )
         )
-        # Attach policy to allow Lambda to read from input S3 bucket
+        # Policy to allow Lambda to read from input S3 bucket
         bucket_input.grant_read(micro_etl_lambda_role)
 
-        # Attach policy to allow Lambda to write to output S3 bucket
+        # Policy to allow Lambda to write to output S3 bucket
         bucket_output.grant_write(micro_etl_lambda_role)
 
-    
-        # micro_etl_lambda = _lambda.Function(
-        #     self, 'MicroETLHandler',
-        #     function_name="MicroETLHandler",
-        #     runtime=_lambda.Runtime.PYTHON_3_10,
-        #     code=_lambda.Code.from_asset('functions'),
-        #     handler='csv_to_parquet_lambda.lambda_handler',
-        #     role=micro_etl_lambda_role
-        # )
+
          # Lambda function for micro ETL using Docker image
         micro_etl_lambda = _lambda.DockerImageFunction(
             self, 'MicroETLHandler',
             function_name="MicroETLHandler",
             code=_lambda.DockerImageCode.from_image_asset('functions'),
-            role=micro_etl_lambda_role
+            role=micro_etl_lambda_role,
+            timeout= Duration.minutes(1) 
         )
 
 
-             # Configure S3 event notification to trigger the Lambda function
+             # S3 event notification to trigger the Lambda function
         bucket_input.add_event_notification(
             s3.EventType.OBJECT_CREATED,
             s3_notifications.LambdaDestination(micro_etl_lambda)
-            #"Event to trigger csv to parquet lambda converter"
         )
 
            # CDK Outputs

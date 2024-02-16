@@ -4,6 +4,7 @@ import boto3
 def lambda_handler(event, context):
     # Get the S3 bucket names from the event
     input_bucket = event['Records'][0]['s3']['bucket']['name']
+    
     output_bucket = "micro-etl-output" 
     
     input_s3_key = event['Records'][0]['s3']['object']['key']
@@ -13,5 +14,5 @@ def lambda_handler(event, context):
     # Read CSV files from the input S3 bucket
     df = wr.s3.read_csv(f"s3://{input_bucket}/{input_s3_key}")
     
-    # Convert CSV to Parquet format
+    # Convert CSV to Parquet format and write to output bucket
     wr.s3.to_parquet(df, f"s3://{output_bucket}/{output_s3_path}")
