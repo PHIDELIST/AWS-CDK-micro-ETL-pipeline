@@ -79,7 +79,8 @@ class AwsCdkMicroEtlPipelineStack(Stack):
                 "glue:GetPartitions",  
                 "glue:BatchDeletePartition", 
                 "glue:CreatePartition",      
-                "glue:DeletePartition"     
+                "glue:DeletePartition",
+                "glue:StartCrawler" 
             ],
             resources=["*"]
         ))
