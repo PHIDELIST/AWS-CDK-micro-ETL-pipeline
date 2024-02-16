@@ -10,8 +10,7 @@ from aws_cdk import (
     aws_glue as glue,
     aws_lambda as _lambda, 
     aws_s3_notifications as s3_notifications,
-    aws_athena as athena,
-    aws_sns as sns
+    aws_athena as athena
 )
 from constructs import Construct
 
@@ -116,10 +115,9 @@ class AwsCdkMicroEtlPipelineStack(Stack):
         # Glue database
         micro_etl_glue_database = glue.CfnDatabase(
             self, "Microetldb",
-            catalog_id="576997243977",
+            catalog_id=self.account,
             database_input={"name": "microetldb"}
         )
-
 
         # Get the S3 bucket object from its name
         output_s3_bucket = s3.Bucket.from_bucket_name(self, "OutputS3Bucket", bucket_name="micro-etl-output")
