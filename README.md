@@ -5,5 +5,7 @@ This pattern demonstrates serverless event driven micro ETL service leveraging D
 The end-to-end orchestration is an event-driven approach. When an input file in .csv or .json format is uploaded to the ‘input s3 bucket’, it trigger a Lambda function that reads the file into a data frame. The script uses awsdatawrangler python library to perform transformation to manipulate the data, convert the data to parquet format, which triger glue crawler to update the Glue catalog with the metadata. Lambda writes the output paequet file to an ‘Output s3 bucket’ and the catalog table is created in Athena for SQL analysis. `
 
 ### Deploy the solution
-1. cdk synth
-2. cdk deploy
+1. pip install requirements.txt
+2. cdk bootstrap
+3. cdk synth
+4. cdk deploy
