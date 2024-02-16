@@ -38,22 +38,22 @@ class AwsCdkMicroEtlPipelineStack(Stack):
                                   auto_delete_objects=True, block_public_access=s3.BlockPublicAccess.BLOCK_ALL
                                   )
         # Lambda function for micro ETL
-        micro_etl_lambda_role = iam.Role(
+        micro_etl_role = iam.Role(
             self, 'MicroETLHandlerRole',
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal('lambda.amazonaws.com'),
                 iam.ServicePrincipal('glue.amazonaws.com')
             )
         )
-        # Allow Lambda function to write logs to CloudWatch
-        micro_etl_lambda_role.add_to_policy(
+        # Allow writing logs to CloudWatch
+        micro_etl_role.add_to_policy(
             iam.PolicyStatement(
                 actions=["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
                 resources=["arn:aws:logs:*:*:*"]
             )
         )
-                # Add permissions to the Lambda role
-        micro_etl_lambda_role.add_to_policy(iam.PolicyStatement(
+                # Add permissions to the micro_etl_role
+        micro_etl_role.add_to_policy(iam.PolicyStatement(
             effect=iam.Effect.ALLOW,
             actions=[
                 "logs:CreateLogGroup",
@@ -88,29 +88,25 @@ class AwsCdkMicroEtlPipelineStack(Stack):
         ))
 
         # Policy to allow Lambda to read from input S3 bucket
-        bucket_input.grant_read(micro_etl_lambda_role)
+        bucket_input.grant_read(micro_etl_role)
 
         # Policy to allow Lambda to write to output S3 bucket
-        bucket_output.grant_write(micro_etl_lambda_role)
-
+        bucket_output.grant_write(micro_etl_role)
 
         # Lambda function for micro ETL using Docker image
         micro_etl_lambda = _lambda.DockerImageFunction(
             self, 'MicroETLHandler',
             function_name="MicroETLHandler",
             code=_lambda.DockerImageCode.from_image_asset('functions'),
-            role=micro_etl_lambda_role,
+            role=micro_etl_role,
             timeout= Duration.minutes(1) 
         )
-
 
         # S3 event notification to trigger the Lambda function
         bucket_input.add_event_notification(
             s3.EventType.OBJECT_CREATED,
             s3_notifications.LambdaDestination(micro_etl_lambda)
         )
-
-
 
         # Glue database
         micro_etl_glue_database = glue.CfnDatabase(
@@ -123,7 +119,7 @@ class AwsCdkMicroEtlPipelineStack(Stack):
         output_s3_bucket = s3.Bucket.from_bucket_name(self, "OutputS3Bucket", bucket_name="micro-etl-output")
         # Glue crawler
         micro_etl_crawler = glue.CfnCrawler(self, "microetlgluecrawler",
-                                      role=micro_etl_lambda_role.role_arn,
+                                      role=micro_etl_role.role_arn,
                                       name="microetlgluecrawler",
                                       database_name= micro_etl_glue_database.database_input.name,
                                        targets={"s3Targets": [{"path": f"s3://{output_s3_bucket.bucket_name}/"}]}
