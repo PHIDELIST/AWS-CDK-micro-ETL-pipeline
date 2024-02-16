@@ -62,6 +62,7 @@ class AwsCdkMicroEtlPipelineStack(Stack):
                 "logs:PutLogEvents",
                 "s3:GetObject",
                 "s3:PutObject",
+                "s3:ListBucket",
                 "athena:startQueryExecution",
                 "athena:stopQueryExecution",
                 "athena:getQueryExecution",
