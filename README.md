@@ -10,10 +10,15 @@ When an input file in .csv or .json format is uploaded to the ‘input s3 bucket
 + PYTHON
 + Docker
 ### Deploy the solution
-1. pip install requirements.txt
-2. cdk bootstrap
-3. cdk synth
-4. cdk deploy
+1. Clone the project repository.
+2. Navigate to the project directory.
+3. pip install requirements.txt
+4. cdk bootstrap
+5. cdk synth
+6. cdk deploy
 
 ### Clean up
+This will remove all resources created by this project from you AWS account
 1. cdk destroy
+## License
+This project is licensed under the MIT License. See the [LINCENSE](https://github.com/PHIDELIST/AWS-CDK-micro-ETL-pipeline/blob/main/LINCENSE.md) file for details.
