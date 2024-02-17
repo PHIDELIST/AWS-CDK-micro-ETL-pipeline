@@ -22,7 +22,7 @@ def upload_file_to_s3(file_path, bucket_name, object_name):
         print(f"File '{file_path}' uploaded successfully to S3 bucket '{bucket_name}' with object key '{object_name}'")
         return True
 
-
+# path to file you want to upload
 file_path = 'sample-data/data.json' 
 bucket_name = 'micro-etl-input'
 object_name = 'data1.json'
