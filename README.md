@@ -19,7 +19,7 @@ When an input file in .csv or .json format is uploaded to the ‘input s3 bucket
 
 ### Usage
 1. use `python scripts/upload_to_s3.py` to upload your raw data to input s3 bucket.
-2. Wait for around 20 seconds
+2. Wait for around 2 minutes
 3. use `python scripts/run_athena_query.py` to query your processed data in output s3 bucket through Athena. feel free to modify the sql query in `run_athena_query.py` to suite your needs.
 
 ### Clean up
