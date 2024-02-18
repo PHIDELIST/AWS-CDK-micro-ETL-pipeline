@@ -20,12 +20,6 @@ def lambda_handler(event, context):
     
     wr.s3.to_parquet(df, f"s3://{output_bucket}/{output_s3_path}")
     
-    #Triger glue
+    #Triger crawler
     client = boto3.client('glue')
-    response = client.start_crawler(Name='microetlgluecrawler',
-                                     Targets={'S3Targets': [{'Path': f"s3://{output_bucket}/{output_s3_path}"}]})
-    
-    return {
-        'statusCode': 200,
-        'body': 'Glue crawler triggered successfully'
-    }
+    client.start_crawler(Name='microetlgluecrawler')

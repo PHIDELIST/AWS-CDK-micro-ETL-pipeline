@@ -52,7 +52,7 @@ SELECT
     COUNT(*) AS trip_count,
     AVG(personid) AS avg_person_id
 FROM
-    microetldb.micro_etl_output
+    microetldb.data_parquet 
 GROUP BY
     trip_id
 ORDER BY

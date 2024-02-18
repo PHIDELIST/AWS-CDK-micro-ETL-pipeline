@@ -122,7 +122,7 @@ class AwsCdkMicroEtlPipelineStack(Stack):
                                       role=micro_etl_role.role_arn,
                                       name="microetlgluecrawler",
                                       database_name= micro_etl_glue_database.database_input.name,
-                                       targets={"s3Targets": [{"path": f"s3://{output_s3_bucket.bucket_name}/"}]}
+                                       targets={"s3Targets": [{"path": f"s3://{output_s3_bucket.bucket_name}/output-parquet-files/"}]}
                                       )
 
         # Athena workgroup

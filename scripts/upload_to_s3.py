@@ -23,8 +23,8 @@ def upload_file_to_s3(file_path, bucket_name, object_name):
         return True
 
 # path to file you want to upload
-file_path = 'sample-data/data.json' 
+file_path = 'sample-data/data.csv' 
 bucket_name = 'micro-etl-input'
-object_name = 'data1.json'
+object_name = 'data.csv'
 
 upload_file_to_s3(file_path, bucket_name, object_name)
